@@ -1,0 +1,17 @@
+<!doctype html>
+<html>
+    <script>
+async function main()
+{
+    let stream = await navigator.mediaDevices.getUserMedia({video:true, audio:false});
+    let localVideo = document.getElementById("localvideo");
+    localVideo.srcObject = stream;
+    localVideo.play();
+}
+
+main();
+    </script>
+    <body>
+        <video id="localvideo"></video>
+    </body>
+</html>
