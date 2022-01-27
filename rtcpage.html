@@ -1,12 +1,17 @@
 <!doctype html>
 <html>
     <script>
+
+let wsControllerPort = WSCONTROLLERPORT; // this is filled in in the C++ code
+
 async function main()
 {
     let stream = await navigator.mediaDevices.getUserMedia({video:true, audio:false});
     let localVideo = document.getElementById("localvideo");
     localVideo.srcObject = stream;
     localVideo.play();
+
+    console.warn("Port is (2) " + wsControllerPort);
 }
 
 main();

@@ -1,6 +1,6 @@
 TEMPLATE = app
 TARGET = qtwebrtctest
-QT += webenginewidgets
+QT += webenginewidgets websockets webchannel
 
 HEADERS += \
 	rtcwindow.h
