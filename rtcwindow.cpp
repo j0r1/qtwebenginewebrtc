@@ -6,6 +6,7 @@
 #include <QJsonObject>
 #include <QJsonDocument>
 #include <QPushButton>
+#include <QUuid>
 #include <iostream>
 
 using namespace std;
@@ -13,21 +14,36 @@ using namespace std;
 RtcWindow::RtcWindow(QWidget *pParent)
 	: QWebEngineView(pParent)
 {
-	auto p = page();
-	QObject::connect(p, &QWebEnginePage::featurePermissionRequested, this, &RtcWindow::handleFeaturePermissionRequested);
-
 	m_pWSChannel = new WebSocketChannel(this);
 	if (!m_pWSChannel->start())
-		cerr << "ERROR: Couldn't start websocket channel" << endl;
+		qWarning() << "ERROR: Couldn't start websocket channel";
 
 	m_pWebChannel = new QWebChannel(this);
 
 	QObject::connect(m_pWSChannel, &WebSocketChannel::newVerifiedConnection, this, &RtcWindow::onNewVerifiedConnection);
 
+	// For testing, need to register some kind of controller object here
 	QWidget *pWidget = new QPushButton(nullptr);
 	m_pWebChannel->registerObject("genericWidget", pWidget);
 
-	//QFile f(":/rtcpage.html");
+	m_origin = "https://qrtc." + QUuid::createUuid().toString(QUuid::WithoutBraces)+".org/";
+	qDebug() << "Using origin " << m_origin;
+
+	setNewPage();
+}
+
+RtcWindow::~RtcWindow()
+{
+}
+
+void RtcWindow::setNewPage()
+{
+	QWebEnginePage *pPage = new QWebEnginePage(this);
+	setPage(pPage); // should delete a previous one
+
+	QObject::connect(pPage, &QWebEnginePage::featurePermissionRequested, this, &RtcWindow::handleFeaturePermissionRequested);
+
+	//QFile f(":/rtcpage.html"); // TODO: when finalizing the page should be embedded in the resource file
 	QFile f("rtcpage.html");
 	f.open(QIODevice::ReadOnly);
 	QString code = f.readAll();
@@ -39,25 +55,29 @@ RtcWindow::RtcWindow(QWidget *pParent)
 	//qwebchannel.open(QIODevice::ReadOnly);
 	//cout << qwebchannel.readAll().toStdString() << endl;
 
-	// cout << code.toStdString() << endl;
-
-	p->setHtml(code, QUrl("http://localhost")); // The second argument is needed, otherwise: TypeError: Cannot read property 'getUserMedia' of undefined
-}
-
-RtcWindow::~RtcWindow()
-{
+	// The second argument is needed, otherwise: TypeError: Cannot read property 'getUserMedia' of undefined
+	// It should be either http://localhost, or another valid https:// name
+	// We're using something based on https:// so that we can check the feature permission
+	pPage->setHtml(code, m_origin);
 }
 
 void RtcWindow::handleFeaturePermissionRequested(const QUrl &securityOrigin, QWebEnginePage::Feature feature)
 {
-	// TODO: this is auto accept, check origin, check feature!
-	cout << "accepting feature permission for " << (int)feature << " from " << securityOrigin.toString().toStdString() << endl;
-	page()->setFeaturePermission(securityOrigin, feature, QWebEnginePage::PermissionGrantedByUser);
+	if (securityOrigin != m_origin)
+	{
+		qWarning() << "NOT accepting feature permission for " << (int)feature << " from " << securityOrigin.toString();
+		page()->setFeaturePermission(securityOrigin, feature, QWebEnginePage::PermissionDeniedByUser);
+	}
+	else
+	{
+		qDebug() << "ACCEPTING feature permission for " << (int)feature << " from " << securityOrigin.toString();
+		page()->setFeaturePermission(securityOrigin, feature, QWebEnginePage::PermissionGrantedByUser);
+	}
 }
 
 void RtcWindow::onNewVerifiedConnection(QWebSocket *pSocket)
 {
-	cerr << "Got new verified connection" << endl;
+	qDebug() << "Got new verified connection!";
 	// Do a reconnect so that this connection has needed info
 	m_pWebChannel->disconnectFrom(m_pWSChannel);
 	m_pWebChannel->connectTo(m_pWSChannel);

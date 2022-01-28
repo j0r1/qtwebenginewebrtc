@@ -17,6 +17,9 @@ private slots:
 	void handleFeaturePermissionRequested(const QUrl &securityOrigin, QWebEnginePage::Feature feature);
 	void onNewVerifiedConnection(QWebSocket *pSocket);
 private:
+	void setNewPage();
+
 	WebSocketChannel *m_pWSChannel;
 	QWebChannel *m_pWebChannel;
+	QString m_origin;
 };
