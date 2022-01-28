@@ -4,9 +4,6 @@
 #include <QUuid>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <iostream>
-
-using namespace std;
 
 WebSocketChannel::WebSocketChannel(QObject *pParent)
 	: QWebChannelAbstractTransport(pParent),
@@ -40,15 +37,15 @@ void WebSocketChannel::sendMessage(const QJsonObject &message)
 	QJsonDocument doc(message);
 	QString str(doc.toJson(QJsonDocument::Compact));
 
-	cerr << "WebSocketChannel::sendMessage: " << str.toStdString() << endl;
+	//qDebug() << "WebSocketChannel::sendMessage: " << str;
 
 	// Send to all connections
 	for (auto &it: m_connections)
 	{
-		cerr << "Inspecting " << (void*)it.first << endl;
+		//qDebug() << "Inspecting " << (void*)it.first;
 		if (it.second) // Only send message after successful identification
 		{
-			cerr << "Sending message!" << endl;
+			//qDebug() << "Sending message!";
 			it.first->sendTextMessage(str);
 		}
 	}
@@ -64,7 +61,7 @@ void WebSocketChannel::onNewConnection()
 	if (!pSocket)
 		return;
 
-	cerr << "New connection" << endl;
+	qDebug() << "New connection on websocket server";
 	
 	m_connections[pSocket] = false; // Not identified yet
 	QObject::connect(pSocket, &QWebSocket::disconnected, this, &WebSocketChannel::onDisconnected);
@@ -79,10 +76,10 @@ void WebSocketChannel::onDisconnected()
 
 	auto it = m_connections.find(pSock);
 	if (it == m_connections.end())
-		cerr << "Connection closing, but not found" << endl;
+		qDebug() << "Connection closing, but not found in map";
 	else
 	{
-		cerr << "Closing connection" << endl;
+		qDebug() << "Closing connection, found in map";
 		m_connections.erase(it);
 	}
 
@@ -98,7 +95,7 @@ void WebSocketChannel::onWebSocketMessage(const QString &message)
 	auto it = m_connections.find(pSock);
 	if (it == m_connections.end())
 	{
-		cerr << "Message received from unregistered websocket? Closing connection" << endl;
+		qDebug() << "Message received from unregistered websocket? Closing connection";
 		pSock->close();
 		return;
 	}
@@ -107,7 +104,7 @@ void WebSocketChannel::onWebSocketMessage(const QString &message)
 	{
 		if (message != m_id)
 		{
-			cerr << "Received incorrect verification message, closing connection" << endl;
+			qDebug() << "Received incorrect verification message, closing connection";
 			pSock->close();
 			return;
 		}
@@ -124,8 +121,8 @@ void WebSocketChannel::onWebSocketMessage(const QString &message)
 		if (doc.isObject())
 			emit messageReceived(doc.object(), this);
 		else
-			cerr << "Not an object: " << message.toStdString() << endl;
+			qDebug() << "WebSocketChannel::onWebSocketMessage: Not an object: " << message;
 	}
 	else
-		cerr << "Not JSON: " << message.toStdString() << endl;
+		qDebug() << "WebSocketChannel::onWebSocketMessage: Not JSON: " << message;
 }
