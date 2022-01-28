@@ -2,7 +2,8 @@
 <html>
     <script>
 
-let wsControllerPort = WSCONTROLLERPORT; // this is filled in in the C++ code
+const wsControllerPort = WSCONTROLLERPORT; // this is filled in in the C++ code
+const wsControllerHandshakeID = HANDSHAKEID; // also filled in by the C++ code
 
 async function main()
 {
@@ -12,6 +13,16 @@ async function main()
     localVideo.play();
 
     console.warn("Port is (2) " + wsControllerPort);
+    console.warn("Handshake ID is " + wsControllerHandshakeID);
+
+    let ws = new WebSocket("ws://localhost:" + wsControllerPort);
+    ws.onopen = () => { 
+        console.warn("WebSocket opened");
+        ws.send(wsControllerHandshakeID);
+    }
+    ws.onclose = () => console.warn("WebSocket closed");
+    ws.onerror = () => console.warn("WebSocket error");
+    ws.onmessage = (msg) => console.warn("Received message: " + msg);
 }
 
 main();

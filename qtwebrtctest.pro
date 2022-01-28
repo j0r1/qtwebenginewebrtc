@@ -3,10 +3,12 @@ TARGET = qtwebrtctest
 QT += webenginewidgets websockets webchannel
 
 HEADERS += \
-	rtcwindow.h
+	rtcwindow.h \
+	websocketchannel.h
 
 SOURCES += \
     main.cpp \
-    rtcwindow.cpp
+    rtcwindow.cpp \
+    websocketchannel.cpp
 
 RESOURCES += qtwebrtctest.qrc
