@@ -7,12 +7,15 @@ class QWebSocket;
 
 class WebSocketChannel : public QWebChannelAbstractTransport
 {
+	Q_OBJECT
 public:
 	WebSocketChannel(QObject *pParent = nullptr);
 	~WebSocketChannel();
 	bool start();
 	int getPort() const { return m_port; }
 	QString getHandshakeIdentifier() const { return m_id; }
+signals:
+	void newVerifiedConnection(QWebSocket *pSocket);
 public slots:
 	void sendMessage(const QJsonObject &message) override;
 private slots:

@@ -2,6 +2,8 @@
 
 #include <QWebEngineView>
 #include <QWebEnginePage>
+#include <QWebChannel>
+#include <QWebSocket>
 
 class WebSocketChannel;
 
@@ -13,6 +15,8 @@ public:
 	~RtcWindow();
 private slots:
 	void handleFeaturePermissionRequested(const QUrl &securityOrigin, QWebEnginePage::Feature feature);
+	void onNewVerifiedConnection(QWebSocket *pSocket);
 private:
 	WebSocketChannel *m_pWSChannel;
+	QWebChannel *m_pWebChannel;
 };

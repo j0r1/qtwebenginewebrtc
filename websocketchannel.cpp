@@ -39,11 +39,18 @@ void WebSocketChannel::sendMessage(const QJsonObject &message)
 {
 	QJsonDocument doc(message);
 	QString str(doc.toJson(QJsonDocument::Compact));
+
+	cerr << "WebSocketChannel::sendMessage: " << str.toStdString() << endl;
+
 	// Send to all connections
 	for (auto &it: m_connections)
 	{
+		cerr << "Inspecting " << (void*)it.first << endl;
 		if (it.second) // Only send message after successful identification
+		{
+			cerr << "Sending message!" << endl;
 			it.first->sendTextMessage(str);
+		}
 	}
 }
 
@@ -106,6 +113,7 @@ void WebSocketChannel::onWebSocketMessage(const QString &message)
 		}
 		// Ok, correct verification message received
 		it->second = true;
+		emit newVerifiedConnection(pSock);
 		return;
 	}
 

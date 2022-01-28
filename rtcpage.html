@@ -1,5 +1,6 @@
 <!doctype html>
 <html>
+    <script type="text/javascript" src="qrc:///qtwebchannel/qwebchannel.js"></script>
     <script>
 
 const wsControllerPort = WSCONTROLLERPORT; // this is filled in in the C++ code
@@ -17,11 +18,27 @@ async function main()
 
     let ws = new WebSocket("ws://localhost:" + wsControllerPort);
     ws.onopen = () => { 
-        console.warn("WebSocket opened");
+        console.warn("WebSocket opened, sending handshake ID");
         ws.send(wsControllerHandshakeID);
+
+        console.warn("Setting up QWebChannel");
+        new QWebChannel(ws, (channel) => {
+            console.warn("Listing objects:");
+            for (let i in channel.objects)
+                console.warn(i);
+
+            let w = channel.objects.genericWidget;
+            setTimeout(() => {
+                w.show();
+            },1000);
+
+            w.clicked.connect((x) => console.warn("Button pressed: " + x));
+        });
     }
     ws.onclose = () => console.warn("WebSocket closed");
     ws.onerror = () => console.warn("WebSocket error");
+    
+    // This is no longer called I think
     ws.onmessage = (msg) => console.warn("Received message: " + msg);
 }
 
