@@ -13,8 +13,17 @@ class RtcCommunicator : public QObject
 public:
 	RtcCommunicator(QObject *pParent);
 	~RtcCommunicator();
+signals:
+	void signalStartGenerateOffer(const QString &streamUuid);
+	void signalStartFromOffer(const QString &streamUuid, const QString &offer);
+	void signalAddIceCandidate(const QString &streamUuid, const QString &candidate);
+	void signalRemoveStream(const QString &streamUuid);
 public slots:
-	void onTestMessage(const QString &s);
+	void onGeneratedOffer(const QString &streamUuid, const QString &offer);
+	void onGeneratedAnswer(const QString &streamUuid, const QString &answer);
+	void onIceCandidate(const QString &streamUuid, const QString &candidate);
+	void onStreamError(const QString &streamUuid, const QString &err);
+	void onConnected(const QString &streamUuid);
 };
 
 class RtcPage : public QWebEnginePage

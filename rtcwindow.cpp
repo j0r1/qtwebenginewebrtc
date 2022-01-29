@@ -19,9 +19,28 @@ RtcCommunicator::~RtcCommunicator()
 {
 }
 
-void RtcCommunicator::onTestMessage(const QString &s)
+void RtcCommunicator::onGeneratedOffer(const QString &streamUuid, const QString &offer)
 {
-	qDebug() << "TestMessage: " << s;
+	qDebug() << "Offer for" << streamUuid;
+	qDebug() << offer;
+}
+
+void RtcCommunicator::onGeneratedAnswer(const QString &streamUuid, const QString &answer)
+{
+	qDebug() << "Answer for " << streamUuid;
+	qDebug() << answer;
+}
+
+void RtcCommunicator::onIceCandidate(const QString &streamUuid, const QString &candidate)
+{
+	qDebug() << "Ice candidate for" << streamUuid;
+	qDebug() << candidate;
+}
+
+void RtcCommunicator::onStreamError(const QString &streamUuid, const QString &err)
+{
+	qDebug() << "Stream error for" << streamUuid;
+	qDebug() << err;
 }
 
 /////////////////////////////////////
@@ -79,7 +98,7 @@ RtcWindow::~RtcWindow()
 {
 }
 
-#define WEBPAGEINQRC
+//#define WEBPAGEINQRC
 
 void RtcWindow::setNewPage()
 {
