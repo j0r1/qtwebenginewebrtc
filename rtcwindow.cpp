@@ -24,6 +24,8 @@ void RtcCommunicator::onTestMessage(const QString &s)
 	qDebug() << "TestMessage: " << s;
 }
 
+/////////////////////////////////////
+
 RtcPage::RtcPage(QObject *pParent, const QString &origin) 
 	: QWebEnginePage(pParent), m_origin(origin)
 {
@@ -51,6 +53,8 @@ void RtcPage::javaScriptConsoleMessage(JavaScriptConsoleMessageLevel level, cons
 	qDebug() << out.toUtf8().data();
 }
 
+/////////////////////////////////////
+
 RtcWindow::RtcWindow(QWidget *pParent)
 	: QWebEngineView(pParent)
 {
@@ -75,6 +79,8 @@ RtcWindow::~RtcWindow()
 {
 }
 
+#define WEBPAGEINQRC
+
 void RtcWindow::setNewPage()
 {
 	QWebEnginePage *pPage = new RtcPage(this, m_origin);
@@ -82,13 +88,24 @@ void RtcWindow::setNewPage()
 
 	QObject::connect(pPage, &QWebEnginePage::featurePermissionRequested, this, &RtcWindow::handleFeaturePermissionRequested);
 
-	//QFile f(":/rtcpage.html"); // TODO: when finalizing the page should be embedded in the resource file
+#ifdef WEBPAGEINQRC
+	QFile f(":/rtcpage.html"); // TODO: when finalizing the page should be embedded in the resource file
+#else
 	QFile f("rtcpage.html");
+#endif
 	f.open(QIODevice::ReadOnly);
 	QString code = f.readAll();
 	code = code.replace("WSCONTROLLERPORT", QString::number(m_pWSChannel->getPort()));
 	code = code.replace("HANDSHAKEID", "\"" + m_pWSChannel->getHandshakeIdentifier() + "\"");
 
+#ifndef WEBPAGEINQRC
+	// For debugging, just include the rtcpage.js code in the html code
+	QFile js("rtcpage.js");
+	js.open(QIODevice::ReadOnly);
+	QString jsCode = js.readAll();
+	code = code.replace("<script type=\"text/javascript\" src=\"qrc:///rtcpage.js\"></script>",
+						"<script>\n" + jsCode + "\n</script>\n");
+#endif
 	// Show the qwebchannel code, but can be loaded using qrc:// prefix in script tag
 	//QFile qwebchannel(":/qtwebchannel/qwebchannel.js");
 	//qwebchannel.open(QIODevice::ReadOnly);

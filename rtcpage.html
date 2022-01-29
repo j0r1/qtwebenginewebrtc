@@ -1,46 +1,17 @@
 <!doctype html>
 <html>
     <script type="text/javascript" src="qrc:///qtwebchannel/qwebchannel.js"></script>
+    <script type="text/javascript" src="qrc:///rtcpage.js"></script>
     <script>
 
-const wsControllerPort = WSCONTROLLERPORT; // this is filled in in the C++ code
-const wsControllerHandshakeID = HANDSHAKEID; // also filled in by the C++ code
+        async function setup()
+        {
+            let communicator = await startQWebChannel(WSCONTROLLERPORT, HANDSHAKEID); // Filled in by C++ code
+            await main(communicator);
+        }
 
-let communicator = null;
+        setup();
 
-async function main()
-{
-    let stream = await navigator.mediaDevices.getUserMedia({video:true, audio:false});
-    let localVideo = document.getElementById("localvideo");
-    localVideo.srcObject = stream;
-    localVideo.play();
-
-    console.log("Port is (2) " + wsControllerPort);
-    console.log("Handshake ID is " + wsControllerHandshakeID);
-
-    let ws = new WebSocket("ws://localhost:" + wsControllerPort);
-    ws.onopen = () => { 
-        console.log("WebSocket opened, sending handshake ID");
-        ws.send(wsControllerHandshakeID);
-
-        console.log("Setting up QWebChannel");
-        new QWebChannel(ws, (channel) => {
-            console.log("Listing objects:");
-            for (let i in channel.objects)
-                console.log(i);
-
-            communicator = channel.objects.communicator;
-            communicator.onTestMessage("Hello from JS");
-        });
-    }
-    ws.onclose = () => console.log("WebSocket closed");
-    ws.onerror = () => console.error("WebSocket error");
-    
-    // This is no longer called I think, is intercepted by QWebChannel
-    ws.onmessage = (msg) => console.log("Received message: " + msg);
-}
-
-main();
     </script>
     <body>
         <video id="localvideo"></video>
