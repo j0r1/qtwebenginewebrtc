@@ -11,6 +11,46 @@
 
 using namespace std;
 
+RtcCommunicator::RtcCommunicator(QObject *pParent) : QObject(pParent)
+{
+}
+
+RtcCommunicator::~RtcCommunicator()
+{
+}
+
+void RtcCommunicator::onTestMessage(const QString &s)
+{
+	qDebug() << "TestMessage: " << s;
+}
+
+RtcPage::RtcPage(QObject *pParent, const QString &origin) 
+	: QWebEnginePage(pParent), m_origin(origin)
+{
+}
+
+RtcPage::~RtcPage()
+{
+}
+
+void RtcPage::javaScriptConsoleMessage(JavaScriptConsoleMessageLevel level, const QString &message, int lineNumber, const QString &sourceID)
+{
+	QString type = "[UNKNOWN]";
+	if (level == QWebEnginePage::InfoMessageLevel)
+		type = "[INFO]";
+	else if (level == QWebEnginePage::WarningMessageLevel)
+		type = "[WARNING]";
+	else if (level == QWebEnginePage::ErrorMessageLevel)
+		type = "[ERROR]";
+
+	QString out = type + " (";
+	if (sourceID != m_origin)
+		out += sourceID + ":";
+	out += QString::number(lineNumber) + ") " + message;
+
+	qDebug() << out.toUtf8().data();
+}
+
 RtcWindow::RtcWindow(QWidget *pParent)
 	: QWebEngineView(pParent)
 {
@@ -22,9 +62,8 @@ RtcWindow::RtcWindow(QWidget *pParent)
 
 	QObject::connect(m_pWSChannel, &WebSocketChannel::newVerifiedConnection, this, &RtcWindow::onNewVerifiedConnection);
 
-	// For testing, need to register some kind of controller object here
-	QWidget *pWidget = new QPushButton(nullptr);
-	m_pWebChannel->registerObject("genericWidget", pWidget);
+	m_pComm = new RtcCommunicator(this);
+	m_pWebChannel->registerObject("communicator", m_pComm);
 
 	m_origin = "https://qrtc." + QUuid::createUuid().toString(QUuid::WithoutBraces)+".org/";
 	qDebug() << "Using origin " << m_origin;
@@ -38,7 +77,7 @@ RtcWindow::~RtcWindow()
 
 void RtcWindow::setNewPage()
 {
-	QWebEnginePage *pPage = new QWebEnginePage(this);
+	QWebEnginePage *pPage = new RtcPage(this, m_origin);
 	setPage(pPage); // should delete a previous one
 
 	QObject::connect(pPage, &QWebEnginePage::featurePermissionRequested, this, &RtcWindow::handleFeaturePermissionRequested);
