@@ -10,11 +10,12 @@ let peerConnections = { };
 
 function periodicCheckWebCamAvailable()
 {
-    if (backupStream === null || localStream === null || localStream !== backupStream) // Only change when using backup stream
+    // Only change when using backup stream as failsafe
+    if (webcamIndex >= 0 || backupStream === null || localStream === null || localStream !== backupStream)
         return;
     
     navigator.mediaDevices.getUserMedia({video:true, audio:false}).then((s) => {
-        setLocalStream(s, 0);
+        setLocalStream(s, 1); // 0 is the backup stream
     }).catch((err) => {
         // console.log("Can't get webcam: " + err);
     })
@@ -38,7 +39,7 @@ function setLocalStream(s, idx)
 
 function toggleNextWebCam()
 {
-    let videoDevs = [];
+    let videoDevs = [ "backupstream" ];
 
     navigator.mediaDevices.enumerateDevices()
     .then((devices) => {
@@ -53,13 +54,21 @@ function toggleNextWebCam()
             console.log(`newWebcamIndex = ${newWebcamIndex}, webcamIndex = ${webcamIndex}`);
             if (newWebcamIndex != webcamIndex)
             {
-                let deviceId = videoDevs[newWebcamIndex].deviceId;
-                console.log(videoDevs[newWebcamIndex].label);
-                navigator.mediaDevices.getUserMedia({video:{deviceId: deviceId}, audio:false }).then((s) => {
-                    setLocalStream(s, newWebcamIndex);
-                }).catch((err) => {
-                    console.log("Can't get webcam: " + err);
-                })
+                if (videoDevs[newWebcamIndex] === "backupstream")
+                {
+                    setLocalStream(backupStream, 0);
+                }
+                else
+                {
+                    let deviceId = videoDevs[newWebcamIndex].deviceId;
+                    console.log(videoDevs[newWebcamIndex].label);
+                    navigator.mediaDevices.getUserMedia({video:{deviceId: deviceId}, audio:false }).then((s) => {
+                        setLocalStream(s, newWebcamIndex);
+                    }).catch((err) => {
+                        console.log("Can't get webcam: " + err);
+                        setLocalStream(backupStream, newWebcamIndex); // use as failsafe so we don't get stuck
+                    })
+                }
             }
         }
     })
@@ -326,7 +335,7 @@ async function startLocalStreamAsync(displayName)
     try
     {
         let s = await navigator.mediaDevices.getUserMedia({video:true, audio:false});
-        setLocalStream(s, 0);
+        setLocalStream(s, 1); // 0 is the backup stream
     }
     catch(err)
     {
