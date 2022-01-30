@@ -54,6 +54,8 @@ private:
 	const QString m_origin;	
 };
 
+// NOTE: the streamUuids are just identifiers for an RTCPeerConnection instance,
+//       they only have a meaning within this web page
 class RtcWindow : public QWebEngineView
 {
 	Q_OBJECT

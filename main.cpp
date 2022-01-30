@@ -9,24 +9,46 @@
 using namespace std;
 
 // Will be executed when all local streams (webcams) have been started
-void startStreams(const vector<RtcWindow*> &rtcWindows)
+void startStreams(const vector<RtcWindow*> &rtcWindows,
+    vector<QString> &streamUuids,
+    vector<vector<QString>> &iceCandidateBuffer)
 {
     qDebug() << "Starting all streams";
     assert(rtcWindows.size() == 2);
 
-    QString uuid = rtcWindows[0]->startGenerateOffer("Remote user (1)");
-    QObject::connect(rtcWindows[0], &RtcWindow::generatedOffer, [&rtcWindows](const QString &streamUuid, const QString &offer) {
+    streamUuids[0] = rtcWindows[0]->startGenerateOffer("Remote user (1)");
+    QObject::connect(rtcWindows[0], &RtcWindow::generatedOffer, [&streamUuids, &rtcWindows, &iceCandidateBuffer](const QString &streamUuid, const QString &offer) {
         
-        rtcWindows[1]->startFromOffer(offer, "Remote user (0)");
+        streamUuids[1] = rtcWindows[1]->startFromOffer(offer, "Remote user (0)");
+
+        // Check if there's something in the iceBuffer, because we didn't know the uuid yet
+
+        for (auto &s : iceCandidateBuffer[1])
+            rtcWindows[1]->addIceCandidate(streamUuids[1], s);
+        iceCandidateBuffer[1].clear();
     });
 
-    QObject::connect(rtcWindows[1], &RtcWindow::generatedAnswer, [uuid,&rtcWindows](const QString &streamUuid, const QString &answer) {
-        // Note that we need to use the first uuid here!
-        rtcWindows[0]->processAnswer(uuid, answer);
+    QObject::connect(rtcWindows[1], &RtcWindow::generatedAnswer, [&streamUuids,&rtcWindows](const QString &streamUuid, const QString &answer) {
+        
+        rtcWindows[0]->processAnswer(streamUuids[0], answer);
+
+        
     });
 
-    // TODO: ice information needs to be exchanged!
+    auto iceHandler = [&rtcWindows, &streamUuids, &iceCandidateBuffer](size_t idx)
+    {
+        return [idx,&rtcWindows, &streamUuids, &iceCandidateBuffer](const QString &streamUuid, const QString &candidate)
+        {
+            size_t otherIdx = 1-idx;
+            if (streamUuids[otherIdx].isEmpty())
+                iceCandidateBuffer[otherIdx].push_back(candidate);
+            else
+                rtcWindows[otherIdx]->addIceCandidate(streamUuids[otherIdx], candidate);
+        };
+    };
 
+    QObject::connect(rtcWindows[0], &RtcWindow::newIceCandidate, iceHandler(0));
+    QObject::connect(rtcWindows[1], &RtcWindow::newIceCandidate, iceHandler(1));
 }
 
 int main(int argc, char **argv)
@@ -39,16 +61,19 @@ int main(int argc, char **argv)
 	vector<unique_ptr<QMainWindow>> mainWindows;
     vector<RtcWindow*> rtcWindows;
 
-    mainWindows.push_back(make_unique<QMainWindow>());
-    mainWindows.push_back(make_unique<QMainWindow>());
+	for (size_t i = 0 ; i < 2 ; i++)
+		mainWindows.push_back(make_unique<QMainWindow>());
+
+    vector<QString> streamUuids(mainWindows.size());
+    vector<vector<QString>> iceCandidateBuffer(mainWindows.size());
 
     size_t count = 0;
-    auto updateLocalStartedCount = [&count,&mainWindows,&rtcWindows]()
+    auto updateLocalStartedCount = [&count,&mainWindows,&rtcWindows,&streamUuids,&iceCandidateBuffer]()
     {
         count++;
         qDebug() << count;
         if (count == mainWindows.size())
-            startStreams(rtcWindows);
+            startStreams(rtcWindows, streamUuids, iceCandidateBuffer);
     };
 
     for (size_t i = 0 ; i < mainWindows.size() ; i++)

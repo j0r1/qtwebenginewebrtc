@@ -195,7 +195,9 @@ function addIceCandidate(uuid, candidateStr)
     }
 
     let pc = peerConnections[uuid];
-    pc.addIceCandidate(JSON.parse(candidateStr));
+    let candidate = JSON.parse(candidateStr);
+    if (candidate)
+        pc.addIceCandidate(candidate);
 }
 
 async function startLocalStreamAsync(displayName)
