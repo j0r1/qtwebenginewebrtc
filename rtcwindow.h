@@ -18,6 +18,7 @@ signals:
 
 	void signalStartGenerateOffer(const QString &streamUuid, const QString &displayName);
 	void signalStartFromOffer(const QString &streamUuid, const QString &offer, const QString &displayName);
+	void signalProcessAnswer(const QString &streamUuid, const QString &answer);
 	void signalAddIceCandidate(const QString &streamUuid, const QString &candidate);
 	void signalRemoveStream(const QString &streamUuid);
 
@@ -62,6 +63,7 @@ public:
 
 	QString startGenerateOffer(const QString &displayName); // returns uuid
 	QString startFromOffer(const QString &offer, const QString &displayName); // returns uuid
+	void processAnswer(const QString &streamUuid, const QString &answer);
 	void addIceCandidate(const QString &streamUuid, const QString &candidate);
 	void removeStream(const QString &streamUuid);
 

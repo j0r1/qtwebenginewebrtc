@@ -21,13 +21,13 @@ RtcCommunicator::~RtcCommunicator()
 
 void RtcCommunicator::onMainProgramStarted()
 {
-	qDebug() << "Main program started";
+	// qDebug() << "Main program started";
 	emit jsSignalMainProgramStarted();
 }
 
 void RtcCommunicator::onLocalStreamStarted()
 {
-	qDebug() << "Local stream started";
+	// qDebug() << "Local stream started";
 	emit jsSignalLocalStreamStarted();
 }
 
@@ -39,22 +39,22 @@ void RtcCommunicator::onLocalStreamError(const QString &err)
 
 void RtcCommunicator::onGeneratedOffer(const QString &streamUuid, const QString &offer)
 {
-	qDebug() << "Offer for" << streamUuid;
-	qDebug() << offer;
+	// qDebug() << "Offer for" << streamUuid;
+	// qDebug() << offer;
 	emit jsSignalGeneratedOffer(streamUuid, offer);
 }
 
 void RtcCommunicator::onGeneratedAnswer(const QString &streamUuid, const QString &answer)
 {
-	qDebug() << "Answer for " << streamUuid;
-	qDebug() << answer;
+	// qDebug() << "Answer for " << streamUuid;
+	// qDebug() << answer;
 	emit jsSignalGeneratedAnswer(streamUuid, answer);
 }
 
 void RtcCommunicator::onIceCandidate(const QString &streamUuid, const QString &candidate)
 {
-	qDebug() << "Ice candidate for" << streamUuid;
-	qDebug() << candidate;
+	// qDebug() << "Ice candidate for" << streamUuid;
+	// qDebug() << candidate;
 	emit jsSignalIceCandidate(streamUuid, candidate);
 }
 
@@ -217,6 +217,11 @@ QString RtcWindow::startFromOffer(const QString &offer, const QString &displayNa
 void RtcWindow::addIceCandidate(const QString &streamUuid, const QString &candidate)
 {
 	emit m_pComm->signalAddIceCandidate(streamUuid, candidate);
+}
+
+void RtcWindow::processAnswer(const QString &streamUuid, const QString &answer)
+{
+	emit m_pComm->signalProcessAnswer(streamUuid, answer);
 }
 
 void RtcWindow::removeStream(const QString &streamUuid)

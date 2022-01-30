@@ -117,10 +117,10 @@ async function startFromOfferAsync(uuid, offerStr, displayName)
 {
     let pc = newPeerConnectionCommon(uuid, displayName);
 
-    let offer = RTCSessionDescription(JSON.parse(offerStr));
+    let offer = new RTCSessionDescription(JSON.parse(offerStr));
     await pc.setRemoteDescription(offer);
 
-    let answer = pc.createAnswer();
+    let answer = await pc.createAnswer();
     await pc.setLocalDescription(answer);
 
     return JSON.stringify(answer);
@@ -131,7 +131,7 @@ async function startGenerateOfferAsync(uuid, displayName)
     let pc = newPeerConnectionCommon(uuid, displayName);
         
     let offer = await pc.createOffer();
-    await pc.setLocalDescription();
+    await pc.setLocalDescription(offer);
 
     return JSON.stringify(offer);
 }
@@ -150,7 +150,35 @@ function startGenerateOffer(uuid, displayName)
 function startFromOffer(uuid, offerStr, displayName)
 {
     startFromOfferAsync(uuid, offerStr, displayName)
-    .then((offer) => { }) // TODO: do we need to do something here?
+    .then((answer) => {
+        communicator.onGeneratedAnswer(uuid, answer)
+    })
+    .catch((err) => {
+        removeStream(uuid);
+        communicator.onStreamError(uuid, "" + err);
+        return;
+    })
+}
+
+async function processAnswerAsync(uuid, answerStr)
+{
+    if (!(uuid in peerConnections)) // TODO: report this somehow?
+    {
+        console.warn("processAnswer: uuid " + uuid + " not found");
+        return;
+    }
+
+    let answer = new RTCSessionDescription(JSON.parse(answerStr));
+    let pc = peerConnections[uuid];
+    await pc.setRemoteDescription(answer);  
+}
+
+function processAnswer(uuid, answerStr)
+{
+    processAnswerAsync(uuid, answerStr)
+    .then((answer) => {
+        console.log("Processed answer!"); // TODO: more feedback?    
+    })
     .catch((err) => {
         removeStream(uuid);
         communicator.onStreamError(uuid, "" + err);
@@ -198,6 +226,7 @@ async function main(comm)
     
     communicator.signalStartLocalStream.connect(startLocalStream);
     communicator.signalStartGenerateOffer.connect(startGenerateOffer);
+    communicator.signalProcessAnswer.connect(processAnswer);
     communicator.signalStartFromOffer.connect(startFromOffer);
     communicator.signalAddIceCandidate.connect(addIceCandidate);
     communicator.signalRemoveStream.connect(removeStream);
