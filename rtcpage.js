@@ -14,13 +14,26 @@ function periodicCheckWebCamAvailable()
         return;
     
     navigator.mediaDevices.getUserMedia({video:true, audio:false}).then((s) => {
-        localStream = s;
-        webcamIndex = 0;
-        localStream.oninactive = switchToBackupStream;
-        updateNewLocalStream();
+        setLocalStream(s, 0);
     }).catch((err) => {
         // console.log("Can't get webcam: " + err);
     })
+}
+
+function setLocalStream(s, idx)
+{
+    if (localStream && localStream != backupStream)
+    {
+        localStream.oninactive = null;
+        const tracks = localStream.getTracks();
+        tracks.forEach((track) => track.stop());
+    }
+    localStream = s;
+    if (s != backupStream)
+        localStream.oninactive = switchToBackupStream;
+
+    webcamIndex = idx;
+    updateNewLocalStream();
 }
 
 function toggleNextWebCam()
@@ -43,10 +56,7 @@ function toggleNextWebCam()
                 let deviceId = videoDevs[newWebcamIndex].deviceId;
                 console.log(videoDevs[newWebcamIndex].label);
                 navigator.mediaDevices.getUserMedia({video:{deviceId: deviceId}, audio:false }).then((s) => {
-                    localStream = s;
-                    webcamIndex = newWebcamIndex;
-                    localStream.oninactive = switchToBackupStream;
-                    updateNewLocalStream();
+                    setLocalStream(s, newWebcamIndex);
                 }).catch((err) => {
                     console.log("Can't get webcam: " + err);
                 })
@@ -81,9 +91,7 @@ function updateNewLocalStream()
 function switchToBackupStream()
 {
     console.log("Stream lost, switching to backup stream");
-    localStream = backupStream; // Make sure future RTCPeerConnections will use this
-
-    updateNewLocalStream();
+    setLocalStream(backupStream, -1);
 }
 
 function setupBackupStream()
@@ -317,14 +325,13 @@ async function startLocalStreamAsync(displayName)
 
     try
     {
-        localStream = await navigator.mediaDevices.getUserMedia({video:true, audio:false});
-        webcamIndex = 0;
-        localStream.oninactive = switchToBackupStream;
+        let s = await navigator.mediaDevices.getUserMedia({video:true, audio:false});
+        setLocalStream(s, 0);
     }
     catch(err)
     {
         console.warn("Error getting local webcam stream: " + err);
-        localStream = backupStream;
+        setLocalStream(backupStream, -1);
     }
 
     vid.srcObject = localStream;
