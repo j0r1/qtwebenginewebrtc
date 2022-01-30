@@ -2,5 +2,6 @@
 <qresource>
 	<file>rtcpage.html</file>
 	<file>rtcpage.js</file>
+	<file>testscreen.png</file>
 </qresource>
 </RCC>
