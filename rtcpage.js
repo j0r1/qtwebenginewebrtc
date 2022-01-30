@@ -3,6 +3,7 @@ let communicator = null;
 const localStreamName = "LOCALSTREAM";
 let localStream = null;
 let backupStream = null;
+let webcamIndex = -1;
 
 const pcConfig = {"iceServers": [{"url": "stun:stun.l.google.com:19302"}]};
 let peerConnections = { };
@@ -14,10 +15,41 @@ function periodicCheckWebCamAvailable()
     
     navigator.mediaDevices.getUserMedia({video:true, audio:false}).then((s) => {
         localStream = s;
+        webcamIndex = 0;
         localStream.oninactive = switchToBackupStream;
         updateNewLocalStream();
     }).catch((err) => {
         // console.log("Can't get webcam: " + err);
+    })
+}
+
+function toggleNextWebCam()
+{
+    let videoDevs = [];
+
+    navigator.mediaDevices.enumerateDevices()
+    .then((devices) => {
+        devices.forEach((device) => {
+            if (device.kind == "videoinput")
+                videoDevs.push(device);
+        });
+
+        if (videoDevs.length > 0)
+        {
+            let newWebcamIndex = (webcamIndex + 1)%videoDevs.length;
+            if (newWebcamIndex != webcamIndex)
+            {
+                let deviceId = videoDevs[newWebcamIndex].deviceId;
+                navigator.mediaDevices.getUserMedia({video:true, audio:false, deviceId: { exact: deviceId}}).then((s) => {
+                    localStream = s;
+                    webcamIndex = newWebcamIndex;
+                    localStream.oninactive = switchToBackupStream;
+                    updateNewLocalStream();
+                }).catch((err) => {
+                    console.log("Can't get webcam: " + err);
+                })
+            }
+        }
     })
 }
 
@@ -284,6 +316,7 @@ async function startLocalStreamAsync(displayName)
     try
     {
         localStream = await navigator.mediaDevices.getUserMedia({video:true, audio:false});
+        webcamIndex = 0;
         localStream.oninactive = switchToBackupStream;
     }
     catch(err)
