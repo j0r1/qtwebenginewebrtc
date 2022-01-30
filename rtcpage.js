@@ -37,10 +37,12 @@ function toggleNextWebCam()
         if (videoDevs.length > 0)
         {
             let newWebcamIndex = (webcamIndex + 1)%videoDevs.length;
+            console.log(`newWebcamIndex = ${newWebcamIndex}, webcamIndex = ${webcamIndex}`);
             if (newWebcamIndex != webcamIndex)
             {
                 let deviceId = videoDevs[newWebcamIndex].deviceId;
-                navigator.mediaDevices.getUserMedia({video:true, audio:false, deviceId: { exact: deviceId}}).then((s) => {
+                console.log(videoDevs[newWebcamIndex].label);
+                navigator.mediaDevices.getUserMedia({video:{deviceId: deviceId}, audio:false }).then((s) => {
                     localStream = s;
                     webcamIndex = newWebcamIndex;
                     localStream.oninactive = switchToBackupStream;
