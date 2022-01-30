@@ -57,6 +57,9 @@ function createVideoElement(uuid, displayName)
 
 function removeStream(uuid)
 {
+    // TODO: what if the local stream/webcam is specified? Ignore? Do something else?
+    // It may still be used in the rest of the peerconnections!
+
     // Cleanup peerConnections entry
     if (uuid in peerConnections)
     {
@@ -68,8 +71,9 @@ function removeStream(uuid)
     }
 
     // Remove UI part
-    let vid = document.getElementById(uuid);
-    document.body.removeChild(vid);
+    let div = document.getElementById(uuid);
+    if (div)
+        document.body.removeChild(div);
 }
 
 let peerConnections = { };
@@ -87,12 +91,13 @@ function newPeerConnectionCommon(uuid, displayName)
     let videoTrack = localStream.getVideoTracks()[0];
     pc.addTrack(videoTrack); // This is our own video
     
-    // This should be the remote video
+    // This should be the remote video (or audio in case that's enabled)
     pc.ontrack = (evt) => {
-        let incomingStream = new MediaStream();
-        incomingStream.addTrack(evt.track);
 
-        vid.srcObject = incomingStream;
+        if (!vid.srcObject)
+            vid.srcObject =  new MediaStream();
+
+        vid.srcObject.addTrack(evt.track);
         vid.play();
     }
 
@@ -175,18 +180,15 @@ async function startLocalStreamAsync(displayName)
     let vid = createVideoElement(localStreamName, displayName);
     vid.srcObject = localStream;
     vid.play();
-
-    setTimeout(() => startGenerateOffer("testuuid", "Bob"), 1000);
 }
 
 function startLocalStream(displayName)
 {
-    console.log("HERE");
     startLocalStreamAsync(displayName)
-    .then(() => {}) // TODO: some feedback?
+    .then(() => communicator.onLocalStreamStarted())
     .catch((err) => {
         removeStream(localStreamName);
-        communicator.onStreamError(localStreamName, "" + err);
+        communicator.onLocalStreamError("" + err);
     })
 }
 
@@ -200,5 +202,5 @@ async function main(comm)
     communicator.signalAddIceCandidate.connect(addIceCandidate);
     communicator.signalRemoveStream.connect(removeStream);
 
-    communicator.onMainProgramStarted();
+    communicator.onMainProgramStarted(); // Only do this _after_ the signal handlers were installed!
 }

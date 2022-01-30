@@ -25,36 +25,51 @@ void RtcCommunicator::onMainProgramStarted()
 	emit jsSignalMainProgramStarted();
 }
 
+void RtcCommunicator::onLocalStreamStarted()
+{
+	qDebug() << "Local stream started";
+	emit jsSignalLocalStreamStarted();
+}
+
+void RtcCommunicator::onLocalStreamError(const QString &err)
+{
+	qDebug() << "Local stream error:" << err;
+	emit jsSignalLocalStreamError(err);
+}
+
 void RtcCommunicator::onGeneratedOffer(const QString &streamUuid, const QString &offer)
 {
 	qDebug() << "Offer for" << streamUuid;
 	qDebug() << offer;
+	emit jsSignalGeneratedOffer(streamUuid, offer);
 }
 
 void RtcCommunicator::onGeneratedAnswer(const QString &streamUuid, const QString &answer)
 {
 	qDebug() << "Answer for " << streamUuid;
 	qDebug() << answer;
+	emit jsSignalGeneratedAnswer(streamUuid, answer);
 }
 
 void RtcCommunicator::onIceCandidate(const QString &streamUuid, const QString &candidate)
 {
 	qDebug() << "Ice candidate for" << streamUuid;
 	qDebug() << candidate;
+	emit jsSignalIceCandidate(streamUuid, candidate);
 }
 
 void RtcCommunicator::onStreamError(const QString &streamUuid, const QString &err)
 {
 	qDebug() << "Stream error for" << streamUuid;
 	qDebug() << err;
+	emit jsSignalStreamError(streamUuid, err);
 }
 
 void RtcCommunicator::onConnected(const QString &streamUuid)
 {
 	qDebug() << "CONNECTED:" << streamUuid;
+	emit jsSignalStreamConnected(streamUuid);
 }
-
-
 
 /////////////////////////////////////
 
@@ -98,6 +113,13 @@ RtcWindow::RtcWindow(const QString &localName, QWidget *pParent)
 
 	m_pComm = new RtcCommunicator(this);
 	QObject::connect(m_pComm, &RtcCommunicator::jsSignalMainProgramStarted, this, &RtcWindow::onMainProgramStarted);
+	QObject::connect(m_pComm, &RtcCommunicator::jsSignalLocalStreamStarted, this, &RtcWindow::onLocalStreamStarted);
+	QObject::connect(m_pComm, &RtcCommunicator::jsSignalLocalStreamError, this, &RtcWindow::onLocalStreamError);
+	QObject::connect(m_pComm, &RtcCommunicator::jsSignalGeneratedOffer, this, &RtcWindow::onGeneratedOffer);
+	QObject::connect(m_pComm, &RtcCommunicator::jsSignalGeneratedAnswer, this, &RtcWindow::onGeneratedAnswer);
+	QObject::connect(m_pComm, &RtcCommunicator::jsSignalIceCandidate, this, &RtcWindow::onIceCandidate);
+	QObject::connect(m_pComm, &RtcCommunicator::jsSignalStreamError, this, &RtcWindow::onStreamError);
+	QObject::connect(m_pComm, &RtcCommunicator::jsSignalStreamConnected, this, &RtcWindow::onStreamConnected);
 
 	m_pWebChannel = new QWebChannel(this);
 	m_pWebChannel->registerObject("communicator", m_pComm);
@@ -176,4 +198,63 @@ void RtcWindow::onMainProgramStarted()
 {
 	// NOTE: In case of a reload of the page, this will be called again!
 	emit m_pComm->signalStartLocalStream(m_localName);
+}
+
+QString RtcWindow::startGenerateOffer(const QString &displayName)
+{
+	QString uuid = QUuid::createUuid().toString();
+	emit m_pComm->signalStartGenerateOffer(uuid, displayName);
+	return uuid;
+}
+
+QString RtcWindow::startFromOffer(const QString &offer, const QString &displayName)
+{
+	QString uuid = QUuid::createUuid().toString();
+	emit m_pComm->signalStartFromOffer(uuid, offer, displayName);
+	return uuid;
+}
+
+void RtcWindow::addIceCandidate(const QString &streamUuid, const QString &candidate)
+{
+	emit m_pComm->signalAddIceCandidate(streamUuid, candidate);
+}
+
+void RtcWindow::removeStream(const QString &streamUuid)
+{
+	emit m_pComm->signalRemoveStream(streamUuid);
+}
+
+void RtcWindow::onLocalStreamStarted()
+{
+	emit localStreamStarted();
+}
+
+void RtcWindow::onLocalStreamError(const QString &err)
+{
+	emit localStreamError(err);
+}
+
+void RtcWindow::onGeneratedOffer(const QString &streamUuid, const QString &offer)
+{
+	emit generatedOffer(streamUuid, offer);
+}
+
+void RtcWindow::onGeneratedAnswer(const QString &streamUuid, const QString &answer)
+{
+	emit generatedAnswer(streamUuid, answer);
+}
+
+void RtcWindow::onIceCandidate(const QString &streamUuid, const QString &candidate)
+{
+	emit newIceCandidate(streamUuid, candidate);
+}
+
+void RtcWindow::onStreamError(const QString &streamUuid, const QString &err)
+{
+	emit streamError(streamUuid, err);
+}
+
+void RtcWindow::onStreamConnected(const QString &streamUuid)
+{
+	emit streamConnected(streamUuid);
 }
