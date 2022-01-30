@@ -19,6 +19,12 @@ RtcCommunicator::~RtcCommunicator()
 {
 }
 
+void RtcCommunicator::onMainProgramStarted()
+{
+	qDebug() << "Main program started";
+	emit jsSignalMainProgramStarted();
+}
+
 void RtcCommunicator::onGeneratedOffer(const QString &streamUuid, const QString &offer)
 {
 	qDebug() << "Offer for" << streamUuid;
@@ -42,6 +48,13 @@ void RtcCommunicator::onStreamError(const QString &streamUuid, const QString &er
 	qDebug() << "Stream error for" << streamUuid;
 	qDebug() << err;
 }
+
+void RtcCommunicator::onConnected(const QString &streamUuid)
+{
+	qDebug() << "CONNECTED:" << streamUuid;
+}
+
+
 
 /////////////////////////////////////
 
@@ -74,18 +87,19 @@ void RtcPage::javaScriptConsoleMessage(JavaScriptConsoleMessageLevel level, cons
 
 /////////////////////////////////////
 
-RtcWindow::RtcWindow(QWidget *pParent)
-	: QWebEngineView(pParent)
+RtcWindow::RtcWindow(const QString &localName, QWidget *pParent)
+	: QWebEngineView(pParent), m_localName(localName)
 {
 	m_pWSChannel = new WebSocketChannel(this);
+	QObject::connect(m_pWSChannel, &WebSocketChannel::newVerifiedConnection, this, &RtcWindow::onNewVerifiedConnection);
+
 	if (!m_pWSChannel->start())
 		qWarning() << "ERROR: Couldn't start websocket channel";
 
-	m_pWebChannel = new QWebChannel(this);
-
-	QObject::connect(m_pWSChannel, &WebSocketChannel::newVerifiedConnection, this, &RtcWindow::onNewVerifiedConnection);
-
 	m_pComm = new RtcCommunicator(this);
+	QObject::connect(m_pComm, &RtcCommunicator::jsSignalMainProgramStarted, this, &RtcWindow::onMainProgramStarted);
+
+	m_pWebChannel = new QWebChannel(this);
 	m_pWebChannel->registerObject("communicator", m_pComm);
 
 	m_origin = "https://qrtc." + QUuid::createUuid().toString(QUuid::WithoutBraces)+".org/";
@@ -116,7 +130,7 @@ void RtcWindow::setNewPage()
 	QString code = f.readAll();
 	code = code.replace("WSCONTROLLERPORT", QString::number(m_pWSChannel->getPort()));
 	code = code.replace("HANDSHAKEID", "\"" + m_pWSChannel->getHandshakeIdentifier() + "\"");
-
+	
 #ifndef WEBPAGEINQRC
 	// For debugging, just include the rtcpage.js code in the html code
 	QFile js("rtcpage.js");
@@ -156,4 +170,10 @@ void RtcWindow::onNewVerifiedConnection(QWebSocket *pSocket)
 	// Do a reconnect so that this connection has needed info
 	m_pWebChannel->disconnectFrom(m_pWSChannel);
 	m_pWebChannel->connectTo(m_pWSChannel);
+}
+
+void RtcWindow::onMainProgramStarted()
+{
+	// NOTE: In case of a reload of the page, this will be called again!
+	emit m_pComm->signalStartLocalStream(m_localName);
 }

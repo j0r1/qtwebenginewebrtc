@@ -14,11 +14,15 @@ public:
 	RtcCommunicator(QObject *pParent);
 	~RtcCommunicator();
 signals:
-	void signalStartGenerateOffer(const QString &streamUuid);
-	void signalStartFromOffer(const QString &streamUuid, const QString &offer);
+	void signalStartLocalStream(const QString &displayName);
+	void signalStartGenerateOffer(const QString &streamUuid, const QString &displayName);
+	void signalStartFromOffer(const QString &streamUuid, const QString &offer, const QString &displayName);
 	void signalAddIceCandidate(const QString &streamUuid, const QString &candidate);
 	void signalRemoveStream(const QString &streamUuid);
+
+	void jsSignalMainProgramStarted();
 public slots:
+	void onMainProgramStarted();
 	void onGeneratedOffer(const QString &streamUuid, const QString &offer);
 	void onGeneratedAnswer(const QString &streamUuid, const QString &answer);
 	void onIceCandidate(const QString &streamUuid, const QString &candidate);
@@ -42,11 +46,12 @@ class RtcWindow : public QWebEngineView
 {
 	Q_OBJECT
 public:
-	RtcWindow(QWidget *pParent = nullptr);
+	RtcWindow(const QString &localName, QWidget *pParent = nullptr);
 	~RtcWindow();
 private slots:
 	void handleFeaturePermissionRequested(const QUrl &securityOrigin, QWebEnginePage::Feature feature);
 	void onNewVerifiedConnection(QWebSocket *pSocket);
+	void onMainProgramStarted();
 private:
 	void setNewPage();
 
@@ -55,4 +60,5 @@ private:
 	WebSocketChannel *m_pWSChannel;
 	QWebChannel *m_pWebChannel;
 	QString m_origin;
+	QString m_localName;
 };

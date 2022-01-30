@@ -10,10 +10,13 @@
             await main(communicator);
         }
 
-        setup();
+        setup()
+        .then(() => console.log("main started successfully"))
+        .catch((err) => {
+            document.write(`Fatal error, communication with C++ part seems to have failed:${err}`);
+        });
 
     </script>
     <body>
-        <video id="localvideo"></video>
     </body>
 </html>

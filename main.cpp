@@ -11,7 +11,7 @@ int main(int argc, char **argv)
     QWebEngineSettings::defaultSettings()->setAttribute(QWebEngineSettings::PluginsEnabled, true);
 
 	QMainWindow  mainWin;
-    auto *pWin = new RtcWindow();
+    auto *pWin = new RtcWindow("Me");
 	mainWin.setCentralWidget(pWin);
 	mainWin.show();
 

@@ -1,5 +1,6 @@
 
 let communicator = null;
+const localStreamName = "LOCALSTREAM";
 
 function startQWebChannel(wsControllerPort, wsControllerHandshakeID)
 {
@@ -36,11 +37,22 @@ const pcConfig = {"iceServers": [{"url": "stun:stun.l.google.com:19302"}]};
 let localStream = null;
 
 // Just a very basic implementation for now
-function createVideoElement(uuid)
+function createVideoElement(uuid, displayName)
 {
+    let div = document.createElement("div");
+    div.id = uuid;
+
+    let nameDiv = document.createElement("div");
+    nameDiv.innerText = displayName;
+    
     let vid = document.createElement("video");
-    vid.id = uuid;
-    document.body.appendChild(vid);
+    
+    div.appendChild(nameDiv);
+    div.appendChild(vid);
+
+    document.body.appendChild(div);
+
+    return vid;
 }
 
 function removeStream(uuid)
@@ -62,7 +74,7 @@ function removeStream(uuid)
 
 let peerConnections = { };
 
-function newPeerConnectionCommon(uuid)
+function newPeerConnectionCommon(uuid, displayName)
 {
     if (!localStream || localStream.getVideoTracks().length == 0)
         throw "No local video stream available";
@@ -70,7 +82,7 @@ function newPeerConnectionCommon(uuid)
     let pc = new RTCPeerConnection(pcConfig);
     peerConnections[uuid] = pc;
 
-    let vid = createVideoElement(uuid);
+    let vid = createVideoElement(uuid, displayName);
     
     let videoTrack = localStream.getVideoTracks()[0];
     pc.addTrack(videoTrack); // This is our own video
@@ -96,21 +108,22 @@ function newPeerConnectionCommon(uuid)
     return pc;
 }
 
-async function startFromOfferAsync(uuid, offerStr)
+async function startFromOfferAsync(uuid, offerStr, displayName)
 {
-    let offer = RTCSessionDescription(JSON.parse(offerStr));
-    let pc = newPeerConnectionCommon(uuid);
+    let pc = newPeerConnectionCommon(uuid, displayName);
 
+    let offer = RTCSessionDescription(JSON.parse(offerStr));
     await pc.setRemoteDescription(offer);
+
     let answer = pc.createAnswer();
     await pc.setLocalDescription(answer);
 
     return JSON.stringify(answer);
 }
 
-async function startGenerateOfferAsync(uuid)
+async function startGenerateOfferAsync(uuid, displayName)
 {
-    let pc = newPeerConnectionCommon(uuid);
+    let pc = newPeerConnectionCommon(uuid, displayName);
         
     let offer = await pc.createOffer();
     await pc.setLocalDescription();
@@ -118,9 +131,9 @@ async function startGenerateOfferAsync(uuid)
     return JSON.stringify(offer);
 }
 
-function startGenerateOffer(uuid)
+function startGenerateOffer(uuid, displayName)
 {
-    startGenerateOfferAsync(uuid)
+    startGenerateOfferAsync(uuid, displayName)
     .then((offer) => communicator.onGeneratedOffer(uuid, offer))
     .catch((err) => {
         removeStream(uuid);
@@ -129,9 +142,9 @@ function startGenerateOffer(uuid)
     })
 }
 
-function startFromOffer(uuid, offerStr)
+function startFromOffer(uuid, offerStr, displayName)
 {
-    startFromOfferAsync(uuid, offerStr)
+    startFromOfferAsync(uuid, offerStr, displayName)
     .then((offer) => { }) // TODO: do we need to do something here?
     .catch((err) => {
         removeStream(uuid);
@@ -152,19 +165,40 @@ function addIceCandidate(uuid, candidateStr)
     pc.addIceCandidate(JSON.parse(candidateStr));
 }
 
+async function startLocalStreamAsync(displayName)
+{
+    if (localStream)
+        throw "Local stream already exists";
+
+    localStream = await navigator.mediaDevices.getUserMedia({video:true, audio:false});
+
+    let vid = createVideoElement(localStreamName, displayName);
+    vid.srcObject = localStream;
+    vid.play();
+
+    setTimeout(() => startGenerateOffer("testuuid", "Bob"), 1000);
+}
+
+function startLocalStream(displayName)
+{
+    console.log("HERE");
+    startLocalStreamAsync(displayName)
+    .then(() => {}) // TODO: some feedback?
+    .catch((err) => {
+        removeStream(localStreamName);
+        communicator.onStreamError(localStreamName, "" + err);
+    })
+}
+
 async function main(comm)
 {
     communicator = comm;
+    
+    communicator.signalStartLocalStream.connect(startLocalStream);
     communicator.signalStartGenerateOffer.connect(startGenerateOffer);
     communicator.signalStartFromOffer.connect(startFromOffer);
     communicator.signalAddIceCandidate.connect(addIceCandidate);
     communicator.signalRemoveStream.connect(removeStream);
-    
-    localStream = await navigator.mediaDevices.getUserMedia({video:true, audio:false});
 
-    let localVideo = document.getElementById("localvideo");
-    localVideo.srcObject = localStream;
-    localVideo.play();
-
-    // setTimeout(() => startGenerateOffer("testuuid"), 1000);
+    communicator.onMainProgramStarted();
 }
