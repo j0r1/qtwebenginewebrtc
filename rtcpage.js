@@ -1,8 +1,56 @@
 
 let communicator = null;
 const localStreamName = "LOCALSTREAM";
-
+let localStream = null;
 let backupStream = null;
+
+const pcConfig = {"iceServers": [{"url": "stun:stun.l.google.com:19302"}]};
+let peerConnections = { };
+
+function periodicCheckWebCamAvailable()
+{
+    if (backupStream === null || localStream === null || localStream !== backupStream) // Only change when using backup stream
+        return;
+    
+    navigator.mediaDevices.getUserMedia({video:true, audio:false}).then((s) => {
+        localStream = s;
+        localStream.oninactive = switchToBackupStream;
+        updateNewLocalStream();
+    }).catch((err) => {
+        // console.log("Can't get webcam: " + err);
+    })
+}
+
+function updateNewLocalStream()
+{
+    let div = document.getElementById(localStreamName);
+    let vid = div.getElementsByTagName("video")[0];
+
+    vid.srcObject = localStream;
+    vid.play();
+
+    let videoTrack = localStream.getVideoTracks()[0];
+
+    for (let uuid in peerConnections)
+    {
+        let pc = peerConnections[uuid];
+
+        let sender = pc.getSenders().find(function(s) {
+            return s.track.kind == videoTrack.kind;
+          });
+
+        if (sender)
+            sender.replaceTrack(videoTrack);
+    }
+}
+
+function switchToBackupStream()
+{
+    console.log("Stream lost, switching to backup stream");
+    localStream = backupStream; // Make sure future RTCPeerConnections will use this
+
+    updateNewLocalStream();
+}
 
 function setupBackupStream()
 {
@@ -61,9 +109,6 @@ function startQWebChannel(wsControllerPort, wsControllerHandshakeID)
     })
 }
 
-const pcConfig = {"iceServers": [{"url": "stun:stun.l.google.com:19302"}]};
-let localStream = null;
-
 // Just a very basic implementation for now
 function createVideoElement(uuid, displayName)
 {
@@ -106,8 +151,6 @@ function removeStream(uuid)
     if (div)
         document.body.removeChild(div);
 }
-
-let peerConnections = { };
 
 function newPeerConnectionCommon(uuid, displayName)
 {
@@ -241,9 +284,11 @@ async function startLocalStreamAsync(displayName)
     try
     {
         localStream = await navigator.mediaDevices.getUserMedia({video:true, audio:false});
+        localStream.oninactive = switchToBackupStream;
     }
     catch(err)
     {
+        console.warn("Error getting local webcam stream: " + err);
         localStream = backupStream;
     }
 
@@ -264,6 +309,7 @@ function startLocalStream(displayName)
 async function main(comm)
 {
     backupStream = await setupBackupStream();
+    setInterval(periodicCheckWebCamAvailable, 1000);
 
     communicator = comm;
     
