@@ -2,6 +2,34 @@
 let communicator = null;
 const localStreamName = "LOCALSTREAM";
 
+let backupStream = null;
+
+function setupBackupStream()
+{
+    return new Promise((resolve, reject) => {
+        let img = new Image();
+        img.src = "qrc:///testscreen.png";
+        img.onload = () => {
+
+            let cnvs = document.createElement("canvas");
+            cnvs.width = img.width;
+            cnvs.height = img.height;
+            
+            setInterval(() => {
+                let ctx = cnvs.getContext("2d");
+                ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, cnvs.width, cnvs.height);    
+            }, 1000);
+            // document.body.appendChild(cnvs);
+
+            let s = cnvs.captureStream(1.0);
+            resolve(s);
+        }
+        img.onerror = (err) => {
+            reject("Error loading test screen image: " + err);
+        }
+    })
+}
+
 function startQWebChannel(wsControllerPort, wsControllerHandshakeID)
 {
     return new Promise((resolve, reject) => {
@@ -46,6 +74,9 @@ function createVideoElement(uuid, displayName)
     nameDiv.innerText = displayName;
     
     let vid = document.createElement("video");
+    vid.setAttribute("autoplay", "");
+    vid.setAttribute("controls", "");
+    vid.setAttribute("muted", "");
     
     div.appendChild(nameDiv);
     div.appendChild(vid);
@@ -205,9 +236,17 @@ async function startLocalStreamAsync(displayName)
     if (localStream)
         throw "Local stream already exists";
 
-    localStream = await navigator.mediaDevices.getUserMedia({video:true, audio:false});
-
     let vid = createVideoElement(localStreamName, displayName);
+
+    try
+    {
+        localStream = await navigator.mediaDevices.getUserMedia({video:true, audio:false});
+    }
+    catch(err)
+    {
+        localStream = backupStream;
+    }
+
     vid.srcObject = localStream;
     vid.play();
 }
@@ -224,6 +263,8 @@ function startLocalStream(displayName)
 
 async function main(comm)
 {
+    backupStream = await setupBackupStream();
+
     communicator = comm;
     
     communicator.signalStartLocalStream.connect(startLocalStream);
@@ -235,3 +276,4 @@ async function main(comm)
 
     communicator.onMainProgramStarted(); // Only do this _after_ the signal handlers were installed!
 }
+

@@ -55,8 +55,11 @@ int main(int argc, char **argv)
 {
     QApplication app(argc, argv);
 
+    QWebEngineSettings::defaultSettings()->setAttribute(QWebEngineSettings::PlaybackRequiresUserGesture, false);
 	// Needed?
     QWebEngineSettings::defaultSettings()->setAttribute(QWebEngineSettings::PluginsEnabled, true);
+    
+    
 
 	vector<unique_ptr<QMainWindow>> mainWindows;
     vector<RtcWindow*> rtcWindows;
