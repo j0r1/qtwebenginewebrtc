@@ -68,7 +68,7 @@ function createVideoElement(uuid, displayName)
 {
     let vid = document.createElement("video");
     vid.setAttribute("autoplay", "");
-    vid.setAttribute("controls", "");
+    // vid.setAttribute("controls", "");
     vid.setAttribute("muted", "");
     vid.style.width = "100%";
     vid.style.height = "100%";
@@ -102,9 +102,13 @@ function removeVideo(uuid)
         fillLayout();
 }
 
+let currentLayoutIndex = 0;
+
 function fillLayout()
 {
     let layout = layoutsForCells[videosAndNames.length][0];
+    currentLayoutIndex = 0;
+
     applyLayout(layout);
 
     let cells = document.querySelectorAll(".cell");
@@ -115,6 +119,13 @@ function fillLayout()
 
         cell.innerHTML = "";
         cell.appendChild(vid);
+
+        let div = document.createElement("div");
+        div.style.position = "absolute";
+        div.style.bottom = "0px";
+        div.innerText = name;
+
+        cell.appendChild(div);
     }
 }
 
@@ -153,4 +164,12 @@ function applyLayout(layout)
     // remove excess cells
     for (let i = layout.length ; i < currentCells.length ; i++)
         parent.removeChild(currentCells[i]);
+}
+
+function toggleNextLayout()
+{
+    let layouts = layoutsForCells[videosAndNames.length];
+    currentLayoutIndex = (currentLayoutIndex+1)%layouts.length;
+
+    applyLayout(layouts[currentLayoutIndex]);
 }
