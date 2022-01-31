@@ -160,6 +160,13 @@ void RtcWindow::setNewPage()
 	QString jsCode = js.readAll();
 	code = code.replace("<script type=\"text/javascript\" src=\"qrc:///rtcpage.js\"></script>",
 						"<script>\n" + jsCode + "\n</script>\n");
+
+	QFile jsui("rtcpageui.js");
+	jsui.open(QIODevice::ReadOnly);
+	QString jsUiCode = jsui.readAll();
+	code = code.replace("<script type=\"text/javascript\" src=\"qrc:///rtcpageui.js\"></script>",
+						"<script>\n" + jsUiCode + "\n</script>\n");
+
 #endif
 	// Show the qwebchannel code, but can be loaded using qrc:// prefix in script tag
 	//QFile qwebchannel(":/qtwebchannel/qwebchannel.js");

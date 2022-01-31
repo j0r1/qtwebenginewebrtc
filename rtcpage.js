@@ -76,9 +76,8 @@ function toggleNextWebCam()
 
 function updateNewLocalStream()
 {
-    let div = document.getElementById(localStreamName);
-    let vid = div.getElementsByTagName("video")[0];
-
+    let vid = document.getElementById(localStreamName);
+    
     vid.srcObject = localStream;
     vid.play();
 
@@ -160,27 +159,6 @@ function startQWebChannel(wsControllerPort, wsControllerHandshakeID)
     })
 }
 
-// Just a very basic implementation for now
-function createVideoElement(uuid, displayName)
-{
-    let div = document.createElement("div");
-    div.id = uuid;
-
-    let nameDiv = document.createElement("div");
-    nameDiv.innerText = displayName;
-    
-    let vid = document.createElement("video");
-    vid.setAttribute("autoplay", "");
-    vid.setAttribute("controls", "");
-    vid.setAttribute("muted", "");
-    
-    div.appendChild(nameDiv);
-    div.appendChild(vid);
-
-    document.body.appendChild(div);
-
-    return vid;
-}
 
 function removeStream(uuid)
 {
@@ -197,10 +175,7 @@ function removeStream(uuid)
         pc.ontrack = null;
     }
 
-    // Remove UI part
-    let div = document.getElementById(uuid);
-    if (div)
-        document.body.removeChild(div);
+    removeVideo(uuid);
 }
 
 function newPeerConnectionCommon(uuid, displayName)
