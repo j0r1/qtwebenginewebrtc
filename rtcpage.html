@@ -23,6 +23,8 @@
         html, body {
           height: 100%;
           margin: 0;
+          background-color: #555555;
+          overflow: hidden;
         }
 
         #buttons {
@@ -53,12 +55,25 @@
         
         .cell {
             box-sizing: border-box;
-            /* border-color: #00ff00; */
-            border-width: 0px;
-            /* border-style: solid; */
-            padding: 5px;
+            border-color: #55555580; 
+            border-width: 1px;
+            border-style: solid;
+            border-radius: 15px;
+            /*padding: 5px;*/
+            margin: 3px; 
             position: absolute;
+            background-color: #777777;
         }
+        .displayname {
+            position: absolute;
+            /*top: calc(-1em/2 + 50%);*/
+            bottom: 0px;
+            width: 100%;
+            text-align: center;
+            /*background-color: #ffffff80;*/
+            color: white;
+        }
+
             </style>
     <body>
         <div id="outercontainer">

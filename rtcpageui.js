@@ -20,24 +20,23 @@ function createCells(xoffset, yoffset, width, height, numCols, numRows)
     return layout;
 }
 
-function generateLayouts()
+function addLayout(layoutsForCells, l)
 {
-    let layoutsForCells = {};
+    let numCells = l.length;
+    if (!(numCells in layoutsForCells))
+        layoutsForCells[numCells] = [ l ];
+    else
+        layoutsForCells[numCells].push(l);
+}
 
-    let addLayout = (l) => {
-        let numCells = l.length;
-        if (!(numCells in layoutsForCells))
-            layoutsForCells[numCells] = [ l ];
-        else
-            layoutsForCells[numCells].push(l);
-    }
-
-    for (let r = 1 ; r <= 4 ; r++)
+function generateLayouts(layoutsForCells)
+{
+    for (let r = 1 ; r <= 10 ; r++)
     {
-        for (let c = 1 ; c <= 4 ; c++)
+        for (let c = 1 ; c <= 10 ; c++)
         {
             // start with r*c cells, check if last row/column can be less
-            addLayout(createCells(0,0,1,1,c,r));
+            addLayout(layoutsForCells, createCells(0,0,1,1,c,r));
 
             if (r > 1 && c > 1)
             {
@@ -45,12 +44,12 @@ function generateLayouts()
 
                 let l0 = createCells(0,0,1,partHeight,c,r-1);
                 for (let cpart = 1 ; cpart < c ; cpart++)
-                    addLayout([...l0, ...createCells(0, partHeight, 1, 1/r, cpart, 1)]);
+                    addLayout(layoutsForCells, [...l0, ...createCells(0, partHeight, 1, 1/r, cpart, 1)]);
 
                 let partWidth = 1-1/c;
                 l0 = createCells(0,0,partWidth,1,c-1,r);
                 for (let rpart = 1 ; rpart < r ; rpart++)
-                    addLayout([...l0, ...createCells(partWidth, 0, 1/c, 1, 1, rpart)]);
+                    addLayout(layoutsForCells, [...l0, ...createCells(partWidth, 0, 1/c, 1, 1, rpart)]);
             }
         }
     }
@@ -58,7 +57,8 @@ function generateLayouts()
     return layoutsForCells;
 }
 
-const layoutsForCells = generateLayouts();
+const layoutsForCells = {};
+generateLayouts(layoutsForCells);
 
 let videosAndNames = [];
 
@@ -72,6 +72,7 @@ function createVideoElement(uuid, displayName)
     vid.setAttribute("muted", "");
     vid.style.width = "100%";
     vid.style.height = "100%";
+    //vid.style.objectFit = "cover";
     vid.style.objectFit = "contain";
     vid.id = uuid;
 
@@ -121,8 +122,7 @@ function fillLayout()
         cell.appendChild(vid);
 
         let div = document.createElement("div");
-        div.style.position = "absolute";
-        div.style.bottom = "0px";
+        div.className = "displayname";
         div.innerText = name;
 
         cell.appendChild(div);
@@ -155,10 +155,11 @@ function applyLayout(layout)
     {
         let [ x0, y0, x1, y1 ] = layout[i];
         let d = currentCells[i];
+        let margin = "3";
         d.style.left = `${x0*100}%`;
         d.style.top = `${y0*100}%`;
-        d.style.width = `${(x1-x0)*100}%`;
-        d.style.height = `${(y1-y0)*100}%`;
+        d.style.width = `calc(${(x1-x0)*100}% - ${2*margin}px)`;
+        d.style.height = `calc(${(y1-y0)*100}% - ${2*margin}px)`;
     }
 
     // remove excess cells
