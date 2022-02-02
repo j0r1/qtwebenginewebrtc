@@ -127,6 +127,8 @@ RtcWindow::RtcWindow(const QString &localName, QWidget *pParent)
 	m_origin = "https://qrtc." + QUuid::createUuid().toString(QUuid::WithoutBraces)+".org/";
 	qDebug() << "Using origin " << m_origin;
 
+	setContextMenuPolicy(Qt::NoContextMenu); // Disable the right-click menu that lets you e.g. reload the page
+
 	setNewPage();
 }
 
@@ -134,7 +136,9 @@ RtcWindow::~RtcWindow()
 {
 }
 
-//#define WEBPAGEINQRC
+// This controls whether the HTML files etc are loaded from disk (easier for debugging)
+// or from the resources embedded in the executable
+#define WEBPAGEINQRC
 
 void RtcWindow::setNewPage()
 {
