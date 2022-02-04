@@ -29,7 +29,10 @@ function validateRoomId(cmd)
 {
     if (!("roomid" in cmd))
         throw "Expecting a roomid message";
+    if (!("displayname" in cmd))
+        throw "Expecting display name to be present";
 
+    const displayName = cmd["displayname"];
     const roomId = cmd["roomid"];
     if (roomId.length !== 6)
         throw "Expecting a string of length 6";
@@ -38,7 +41,7 @@ function validateRoomId(cmd)
         if (allowedCharactersInRoomId.indexOf(c) < 0)
             throw `Character '${c}' is not allowed in room ID`;
     }
-    return roomId;
+    return [ roomId, displayName ];
 }
 
 class Connection
@@ -48,6 +51,7 @@ class Connection
         this.address = conn.remoteAddress;
         this.connection = conn;
         this.roomId = null;
+        this.displayName = null;
         this.uuid = uuidv4();
 
         this.send({"uuid": this.uuid}); // Make sure you know your own uuid
@@ -92,7 +96,7 @@ class Connection
     {
         if (this.roomId === null)
         {
-            this.roomId = validateRoomId(cmd);
+            [ this.roomId, this.displayName ] = validateRoomId(cmd);
             removeConnectionFrom(this, provisionalConnections);
             if (!(this.roomId in rooms))
                 rooms[this.roomId] = [ this ];
@@ -101,7 +105,7 @@ class Connection
             
             // Announce participant to everyone, including ourselves (this is indication that we're in the room)
             for (let c of rooms[this.roomId])
-                c.send({"userjoined": this.uuid});
+                c.send({"userjoined": this.uuid, "displayname": this.displayName});
         }
         else
         {
@@ -121,7 +125,11 @@ class Connection
             if (!destConn)
                 console.warn(`Destination ${dst} not found in room ${this.roomId}`);
             else
+            {
+                cmd["source"] = this.uuid;
+                cmd["displayname"] = this.displayName;
                 destConn.send(cmd);
+            }
         }
     }
 

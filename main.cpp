@@ -104,9 +104,11 @@ int main_old(int argc, char **argv)
     return status;
 }
 
-int main(int argc, char **argv)
+int main_test(int argc, char **argv)
 {
     QApplication app(argc, argv);
+
+    QWebEngineSettings::defaultSettings()->setAttribute(QWebEngineSettings::PlaybackRequiresUserGesture, false);
 
 	if (argc != 3)
 	{
@@ -133,5 +135,26 @@ int main(int argc, char **argv)
 
 	int status = app.exec();
 	mainWindows.clear();
+	return status;
+}
+
+int main(int argc, char **argv)
+{
+    QApplication app(argc, argv);
+    
+    QWebEngineSettings::defaultSettings()->setAttribute(QWebEngineSettings::PlaybackRequiresUserGesture, false);
+
+	if (argc != 4)
+	{
+		qCritical() << "Usage: qtwebrtctest wsurl roomid(6 capital letters) displayname";
+		return -1;
+	}
+
+	QString wsUrl(argv[1]);
+    QString roomId(argv[2]);
+    QString displayName(argv[3]);
+	
+    MainWin win(wsUrl, displayName, roomId);
+	int status = app.exec();
 	return status;
 }

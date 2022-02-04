@@ -3,6 +3,8 @@
 #include <QMainWindow>
 #include <QWebSocket>
 #include "rtcwindow.h"
+#include <map>
+#include <vector>
 
 class MainWin : public QMainWindow
 {
@@ -18,13 +20,19 @@ private slots:
 	void onWebSocketConnected();
 	void onTextMessage(const QString &msg);
 private:
+	void sendJson(const QJsonObject &obj);
 	void processRoomMessage(const QJsonObject &obj);
 	void onPersonalMessage(const QJsonObject &obj);
-	void onUserJoined(const QString &uuid);
+	void onUserJoined(const QString &uuid, const QString &displayName);
 	void onUserLeft(const QString &uuid);
 
 	RtcWindow *m_pRtcWin;
 	QWebSocket *m_pSock;
 	QString m_displayName, m_wsUrl, m_roomName;
 	QString m_ownUserUuid;
+
+	std::map<QString,QString> m_userToStream;
+	std::map<QString,QString> m_streamToUser;
+
+	std::map<QString,std::vector<QString>> m_userIceBuffer;
 };
