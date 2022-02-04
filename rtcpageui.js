@@ -91,7 +91,7 @@ function removeVideo(uuid)
     {
         if (videosAndNames[i][0].id == uuid)
         {
-            videosAndNames.splice(0,1);
+            videosAndNames.splice(i,1);
             found = true;
             break;
         }
