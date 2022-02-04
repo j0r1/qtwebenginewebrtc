@@ -35,7 +35,7 @@ function validateRoomId(cmd)
         throw "Expecting a string of length 6";
     for (let c of roomId)
     {
-        if (allowedCharactersInRoomId.find(c) < 0)
+        if (allowedCharactersInRoomId.indexOf(c) < 0)
             throw `Character '${c}' is not allowed in room ID`;
     }
     return roomId;
@@ -94,7 +94,10 @@ class Connection
         {
             this.roomId = validateRoomId(cmd);
             removeConnectionFrom(this, provisionalConnections);
-            rooms[this.roomId].push(this);
+            if (!(this.roomId in rooms))
+                rooms[this.roomId] = [ this ];
+            else
+                rooms[this.roomId].push(this);
             
             // Announce participant to everyone, including ourselves (this is indication that we're in the room)
             for (let c of rooms[this.roomId])
@@ -102,8 +105,8 @@ class Connection
         }
         else
         {
+            // Forward message to destination
             let dst = cmd["destination"];
-            let payload = cmd["payload"];
 
             let destConn = null;
             for (let c of rooms[this.roomId])
@@ -118,7 +121,7 @@ class Connection
             if (!destConn)
                 console.warn(`Destination ${dst} not found in room ${this.roomId}`);
             else
-                destConn.send(payload);
+                destConn.send(cmd);
         }
     }
 
