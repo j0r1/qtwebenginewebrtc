@@ -51,16 +51,8 @@ void startStreams(const vector<RtcWindow*> &rtcWindows,
     QObject::connect(rtcWindows[1], &RtcWindow::newIceCandidate, iceHandler(1));
 }
 
-int main_old(int argc, char **argv)
+int main_signalslot(QApplication &app, const vector<QString> &args)
 {
-    QApplication app(argc, argv);
-
-    QWebEngineSettings::defaultSettings()->setAttribute(QWebEngineSettings::PlaybackRequiresUserGesture, false);
-	// Needed?
-    QWebEngineSettings::defaultSettings()->setAttribute(QWebEngineSettings::PluginsEnabled, true);
-    
-    
-
 	vector<unique_ptr<QMainWindow>> mainWindows;
     vector<RtcWindow*> rtcWindows;
 
@@ -104,20 +96,16 @@ int main_old(int argc, char **argv)
     return status;
 }
 
-int main_test(int argc, char **argv)
+int main_testroomserver(QApplication &app, const vector<QString> &args)
 {
-    QApplication app(argc, argv);
-
-    QWebEngineSettings::defaultSettings()->setAttribute(QWebEngineSettings::PlaybackRequiresUserGesture, false);
-
-	if (argc != 3)
+	if (args.size() != 2)
 	{
-		qCritical() << "Usage: qtwebrtctest wsurl num";
+		qCritical() << "Usage: qtwebrtctest 'testroomserver' wsurl num";
 		return -1;
 	}
 
-	QString wsUrl(argv[1]);
-	int num = stoi(argv[2]);
+	QString wsUrl(args[0]);
+	int num = args[1].toInt();
 	if (num < 1)
 	{
 		qCritical() << "Nothing to do";
@@ -138,23 +126,60 @@ int main_test(int argc, char **argv)
 	return status;
 }
 
-int main(int argc, char **argv)
+int main_singleinstance(QApplication &app, const vector<QString> &args)
 {
-    QApplication app(argc, argv);
-    
-    QWebEngineSettings::defaultSettings()->setAttribute(QWebEngineSettings::PlaybackRequiresUserGesture, false);
-
-	if (argc != 4)
+	if (args.size() != 3)
 	{
-		qCritical() << "Usage: qtwebrtctest wsurl roomid(6 capital letters) displayname";
+		qCritical() << "Usage: qtwebrtctest 'main' wsurl roomid(6 capital letters) displayname";
 		return -1;
 	}
 
-	QString wsUrl(argv[1]);
-    QString roomId(argv[2]);
-    QString displayName(argv[3]);
+	QString wsUrl(args[0]);
+    QString roomId(args[1]);
+    QString displayName(args[2]);
 	
     MainWin win(wsUrl, displayName, roomId);
 	int status = app.exec();
 	return status;
+}
+
+int main(int argc, char **argv)
+{
+    QApplication app(argc, argv);    
+
+    // This is required to allow the videos to play immediately, otherwise an
+    // error may be given that the user needs to interact with the webpage first
+    QWebEngineSettings::defaultSettings()->setAttribute(QWebEngineSettings::PlaybackRequiresUserGesture, false);
+	// Needed?
+    // QWebEngineSettings::defaultSettings()->setAttribute(QWebEngineSettings::PluginsEnabled, true);
+
+    auto globalUsage = [](){
+        qCritical() << R"XYZ(The first argument should specify a type:
+    - testsignalslot: for a single program that uses two RtcWindow instances, 
+                  connecting them directly with signals & slots
+    - testroomserver: for a single program in which multiple RtcWindow
+                       instances are connected through a server program
+    - main: starts a single instance and connects to a server program. Start
+            one or more other programs with the same server/room to have
+            multiple streams
+)XYZ";
+        return -1;
+    };
+
+    if (argc < 2)
+        return globalUsage();
+    
+    QString type(argv[1]);
+    vector<QString> args;
+    for (size_t i = 2 ; i < argc ; i++)
+        args.push_back(argv[i]);
+
+    if (type == "testsignalslot")
+        return main_signalslot(app, args);
+    if (type == "testroomserver")
+        return main_testroomserver(app, args);
+    if (type == "main")
+        return main_singleinstance(app, args);
+
+	return globalUsage();
 }

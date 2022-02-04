@@ -20,3 +20,30 @@ used in the web page (stun.l.google.com:19302), and no TURN surver is
 specified. The candidates signalled by the `newIceCandidate` signal need
 to be sent to the other party, that needs to process them with
 `addIceCandidate`.
+
+Depending on the first argument, different versions of the main program
+can be executed: `testsignalslot` starts the original main program where
+two RtcWindow instances are connected using signals and slots. For the
+`testroomserver` and `main` versions, you need to start a helper server
+that will be used to exchange offer/answer/ICE info.
+
+This is a node.js program, to install the dependencies first run
+`npm install`. Then, start the program on a specific port, e.g.
+
+    node roomserver.js 12345
+
+The `testroomserver` version takes a websocket URL and a number of 
+instances of RtcWindow to launch, e.g.
+
+    ./qtwebrtctest testroomserver ws://localhost:12345 3
+
+will show three windows that will start exchanging video streams.
+
+The `main` version just launches a single instance, you need
+to supply a websocket URL again, a room name and your name. Everyone
+in the same room will exchange video information with each other,
+and this room name should consists of six capital letters, e.g.
+
+    ./qtwebrtctest main ws://localhost:12345 ROOMXY John
+
+
