@@ -1,10 +1,10 @@
-#include "rtcwindow.h"
+#include "mainwin.h"
 #include <QApplication>
 #include <QWebEngineSettings>
-#include <QMainWindow>
 #include <memory>
 #include <vector>
 #include <cassert>
+#include <string>
 
 using namespace std;
 
@@ -51,7 +51,7 @@ void startStreams(const vector<RtcWindow*> &rtcWindows,
     QObject::connect(rtcWindows[1], &RtcWindow::newIceCandidate, iceHandler(1));
 }
 
-int main(int argc, char **argv)
+int main_old(int argc, char **argv)
 {
     QApplication app(argc, argv);
 
@@ -102,4 +102,36 @@ int main(int argc, char **argv)
     int status = app.exec();
     mainWindows.clear();
     return status;
+}
+
+int main(int argc, char **argv)
+{
+    QApplication app(argc, argv);
+
+	if (argc != 3)
+	{
+		qCritical() << "Usage: qtwebrtctest wsurl num";
+		return -1;
+	}
+
+	QString wsUrl(argv[1]);
+	int num = stoi(argv[2]);
+	if (num < 1)
+	{
+		qCritical() << "Nothing to do";
+		return -1;
+	}
+	if (num > 16)
+	{
+		qCritical() << "Too many instances requested";
+		return -1;
+	}
+
+	vector<unique_ptr<MainWin>> mainWindows;
+	for (int i = 0 ; i < num ; i++)
+		mainWindows.push_back(make_unique<MainWin>(wsUrl, "Local user (" + QString::number(i) + ")", "ABCDEF"));
+
+	int status = app.exec();
+	mainWindows.clear();
+	return status;
 }

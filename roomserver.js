@@ -16,9 +16,9 @@ const rooms = { };
 
 function removeConnectionFrom(c, l)
 {
-    let idx = l.findIndex(c);
+    let idx = l.indexOf(c);
     if (idx < 0)
-        throw `Specified connection ${c.address} not found in list`;
+        throw `Specified connection ${c.getAddress()} not found in list`;
 
     l.splice(idx, 1);
 }
@@ -55,15 +55,18 @@ class Connection
         conn.on("message", (msg) => this.onMessage(msg));
         conn.on("close", () => this.onClose());
 
-        console.log("Connection from " + conn.address);
+        console.log(`Connection from ${this.address}, uuid is ${this.uuid}`);
     }
 
     getUuid() { return this.uuid; }
+    getAddress() { return this.address; }
 
     onClose()
     {
         try 
         {
+            console.log(`Removing connection from ${this.address}, uuid ${this.uuid}`);
+
             if (this.roomId === null)
                 removeConnectionFrom(this, provisionalConnections);
             else
