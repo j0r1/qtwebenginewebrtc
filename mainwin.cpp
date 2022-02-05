@@ -1,6 +1,7 @@
 #include "mainwin.h"
 #include <QJsonObject>
 #include <QJsonDocument>
+#include <QMessageBox>
 
 MainWin::MainWin(const QString &serverUrl, const QString &displayName, const QString &roomName)
 	: m_wsUrl(serverUrl), m_displayName(displayName), m_roomName(roomName), m_pSock(nullptr)
@@ -41,6 +42,7 @@ void MainWin::onLocalVideoStarted()
 	QObject::connect(m_pSock, QOverload<QAbstractSocket::SocketError>::of(&QWebSocket::error),
     	[=](QAbstractSocket::SocketError error) {
 			qDebug() << "Error in websocket connection" << error;
+			QMessageBox::critical(this, "Error", "Error in connection with room server");
 	});
 
 	QObject::connect(m_pSock, &QWebSocket::textMessageReceived, this, &MainWin::onTextMessage);
@@ -50,7 +52,7 @@ void MainWin::onLocalVideoStarted()
 
 void MainWin::onWebSocketConnected()
 {
-	qDebug() << "Websocket connected, sending room to join";
+	// qDebug() << "Websocket connected, sending room to join";
 	sendJson({ { "roomid", m_roomName}, { "displayname", m_displayName } });
 }
 
