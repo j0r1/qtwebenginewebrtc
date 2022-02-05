@@ -14,6 +14,10 @@ public:
 	RtcCommunicator(QObject *pParent);
 	~RtcCommunicator();
 signals:
+	void signalToggleNextWebcam();
+	void signalToggleNextLayout();
+	void signalSetShowButtons(bool show);
+
 	void signalStartLocalStream(const QString &displayName);
 
 	void signalStartGenerateOffer(const QString &streamUuid, const QString &displayName);
@@ -69,7 +73,12 @@ public:
 	void addIceCandidate(const QString &streamUuid, const QString &candidate);
 	void removeStream(const QString &streamUuid);
 
-signals:
+public slots:
+	void toggleNextWebcam();
+	void toggleNextLayout();
+	void setShowButtons(bool show);
+
+signals:	
 	void localStreamStarted();
 	void localStreamError(const QString &err);
 

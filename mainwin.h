@@ -3,10 +3,11 @@
 #include <QMainWindow>
 #include <QWebSocket>
 #include "rtcwindow.h"
+#include "ui_mainwin.h"
 #include <map>
 #include <vector>
 
-class MainWin : public QMainWindow
+class MainWin : public QMainWindow, public Ui_MainWin
 {
 	Q_OBJECT
 public:

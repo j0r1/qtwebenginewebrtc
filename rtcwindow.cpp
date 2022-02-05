@@ -274,3 +274,18 @@ void RtcWindow::onStreamConnected(const QString &streamUuid)
 {
 	emit streamConnected(streamUuid);
 }
+
+void RtcWindow::toggleNextWebcam()
+{
+	emit m_pComm->signalToggleNextWebcam();
+}
+
+void RtcWindow::toggleNextLayout()
+{
+	emit m_pComm->signalToggleNextLayout();
+}
+
+void RtcWindow::setShowButtons(bool show)
+{
+	emit m_pComm->signalSetShowButtons(show);
+}

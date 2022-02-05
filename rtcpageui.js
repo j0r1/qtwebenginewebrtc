@@ -174,3 +174,12 @@ function toggleNextLayout()
 
     applyLayout(layouts[currentLayoutIndex]);
 }
+
+function showButtons(show)
+{
+    let elem = document.getElementById("buttons");
+    if (show)
+        elem.classList.remove("hidden");
+    else
+        elem.classList.add("hidden");
+}

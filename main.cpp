@@ -77,8 +77,9 @@ int main_signalslot(QApplication &app, const vector<QString> &args)
         auto *pWin = new RtcWindow("Local user (" + QString::number(i) + ")", pMainWin.get());
         rtcWindows.push_back(pWin);
 
-        QObject::connect(pWin, &RtcWindow::localStreamStarted, [&updateLocalStartedCount](){
+        QObject::connect(pWin, &RtcWindow::localStreamStarted, [pWin, &updateLocalStartedCount](){
             qDebug() << "Local stream started!";
+            pWin->setShowButtons(true);
             updateLocalStartedCount();
         });
 

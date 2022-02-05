@@ -6,7 +6,12 @@
 MainWin::MainWin(const QString &serverUrl, const QString &displayName, const QString &roomName)
 	: m_wsUrl(serverUrl), m_displayName(displayName), m_roomName(roomName), m_pSock(nullptr)
 {
+	setupUi(this);
+
 	m_pRtcWin = new RtcWindow(displayName, this);
+	QObject::connect(actionNext_webcam, SIGNAL(triggered()), m_pRtcWin, SLOT(toggleNextWebcam()));
+	QObject::connect(actionNext_layout, SIGNAL(triggered()), m_pRtcWin, SLOT(toggleNextLayout()));
+
 	QObject::connect(m_pRtcWin, &RtcWindow::localStreamStarted, this, &MainWin::onLocalVideoStarted);
 	QObject::connect(m_pRtcWin, &RtcWindow::localStreamError, [](const QString &err)
 	{

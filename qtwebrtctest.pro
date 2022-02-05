@@ -7,6 +7,7 @@ HEADERS += \
 	websocketchannel.h \
 	mainwin.h
 
+FORMS += mainwin.ui
 
 SOURCES += \
     main.cpp \

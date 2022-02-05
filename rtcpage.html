@@ -33,6 +33,10 @@
             left: 0px;
         }
 
+        .hidden {
+            display: none;
+        }
+
         #outercontainer {
             box-sizing: border-box;
             width:100%;
@@ -79,7 +83,7 @@
         <div id="outercontainer">
             <div id="container">
             </div>
-            <div id="buttons">
+            <div id="buttons" class="hidden">
                 <button onclick="toggleNextWebCam()">Next webcam</button>
                 <button onclick="toggleNextLayout()">Next layout</button>
             </div>

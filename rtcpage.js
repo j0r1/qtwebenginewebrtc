@@ -346,6 +346,12 @@ async function main(comm)
     communicator.signalAddIceCandidate.connect(addIceCandidate);
     communicator.signalRemoveStream.connect(removeStream);
 
+    communicator.signalToggleNextWebcam.connect(toggleNextWebCam);
+    communicator.signalToggleNextLayout.connect(toggleNextLayout);
+    communicator.signalSetShowButtons.connect(showButtons);
+
+    showButtons(false);
+
     communicator.onMainProgramStarted(); // Only do this _after_ the signal handlers were installed!
 }
 
