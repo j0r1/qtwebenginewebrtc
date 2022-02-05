@@ -79,7 +79,7 @@ function updateNewLocalStream()
     let vid = document.getElementById(localStreamName);
     
     vid.srcObject = localStream;
-    vid.play();
+    // vid.play(); // Actually returns a promise, but not needed because of autoplay
 
     let videoTrack = localStream.getVideoTracks()[0];
 
@@ -198,7 +198,7 @@ function newPeerConnectionCommon(uuid, displayName)
             vid.srcObject =  new MediaStream();
 
         vid.srcObject.addTrack(evt.track);
-        vid.play();
+        // vid.play(); // Actually returns a promise, but not needed because of autoplay
     }
 
     pc.onicecandidate = (evt) => { 
@@ -319,7 +319,7 @@ async function startLocalStreamAsync(displayName)
     }
 
     vid.srcObject = localStream;
-    vid.play();
+    // vid.play(); // Actually returns a promise, but not needed because of autoplay
 }
 
 function startLocalStream(displayName)
