@@ -173,6 +173,8 @@ function removeStream(uuid)
 
         pc.onicecandidate = null;
         pc.ontrack = null;
+
+        pc.close(); // need to do this for correct cleanup
     }
 
     removeVideo(uuid);
